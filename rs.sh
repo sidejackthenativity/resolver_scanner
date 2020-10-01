@@ -1,12 +1,26 @@
-#/bin/#!/usr/bin/env bash
+#!/bin/bash
+# Declare array
+declare -a ARRAY
+# Link filedescriptor 10 with stdin
+exec 10<&0
+# stdin replaced with a file supplied as a first argument
+exec < $1
+let count=0
+declare res
+comp='open-resolver-detected'
 
-input= "test.txt"
+while read LINE; do
+    res=`dig +short test.openresolver.com TXT @$LINE`
+    echo $res
+    if [[ "$res" == *"$comp"* ]]; then
+      ARRAY[$count]=$LINE
+      ((count++))
+    fi
+done
 
-while IFS= read -r line
-do
-  echo "$line"
-done < "$input"
-
-#if [[dig +short test.openresolver.com "$line" == *"open-resolver-detected" ]]; then
-#  echo "$line"
-#fi
+echo Number of elements: ${#ARRAY[@]}
+# echo array's content
+echo ${ARRAY[@]}
+# restore stdin from filedescriptor 10
+# and close filedescriptor 10
+exec 0<&10 10<&-
